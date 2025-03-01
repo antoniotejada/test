@@ -24,6 +24,8 @@ jobs:
                 per_page: 100
               }
             );
+            console.log("Stargazers", stargazers);
+            console.log("User", issueUser);
             const hasStarred = stargazers.some(star => star.login === issueUser);
             return hasStarred;
 
