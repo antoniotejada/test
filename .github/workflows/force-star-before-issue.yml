@@ -30,6 +30,18 @@ jobs:
             console.log("User", issueUser);
             const hasStarred = stargazers.some(star => star.login === issueUser);
             */
+
+            const stargazers = await github.paginate(
+              github.rest.activity.listStargazersForRepo, 
+              {
+                owner: repoOwner,
+                repo: repoName,
+                per_page: 100
+              }
+            );
+            console.log("Stargazers", stargazers);
+            console.log("User", issueUser);
+            const hasStarred = stargazers.some(star => star.login === issueUser);
             
             // /user/starred/{owner}/{repo}
             // console.log(github.rest);
