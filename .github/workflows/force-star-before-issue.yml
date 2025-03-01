@@ -32,6 +32,7 @@ jobs:
             */
             
             // /user/starred/{owner}/{repo}
+            console.log(github.rest);
             const response = await github.rest.user.starred({owner: repoOwner, repo: repoName});
             console.log("Reponse", response);
             return response;
