@@ -17,7 +17,7 @@ jobs:
             const repoOwner = context.repo.owner;
             const repoName = context.repo.repo;
             const stargazers = await github.paginate(
-              github.repos.listStargazers, 
+              github.rest.repos.listStargazers, 
               {
                 owner: repoOwner,
                 repo: repoName,
@@ -35,7 +35,7 @@ jobs:
             const issueNumber = context.payload.issue.number;
             const issueUser = context.payload.issue.user.login;
             const comment = `Hello @${issueUser}, in order to create issues in this repository, you need to star it first. Please star the repo and reopen the issue.`;
-            await github.issues.createComment({
+            await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: issueNumber,
@@ -48,7 +48,7 @@ jobs:
         with:
           script: |
             const issueNumber = context.payload.issue.number;
-            await github.issues.update({
+            await github.rest.issues.update({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: issueNumber,
