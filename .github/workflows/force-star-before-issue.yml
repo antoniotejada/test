@@ -60,5 +60,6 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: issueNumber,
-              state: 'stale'
+              state: 'closed',
+              state_reason: 'unstarred'
             });
