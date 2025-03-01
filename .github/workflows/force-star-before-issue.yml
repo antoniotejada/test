@@ -10,45 +10,47 @@ jobs:
     steps:
       - name: Check if user has starred the repo
         id: check_star
-        uses: octokit/request-action@v2
+        uses: actions/github-script@v6
         with:
-          route: GET /repos/{owner}/{repo}/stargazers
-          owner: ${{ github.repository_owner }}
-          repo: ${{ github.event.repository.name }}
-          per_page: 100
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Find if user has starred the repo
-        id: user_has_starred
-        run: |
-          user="${{ github.event.issue.user.login }}"
-          stargazers=$(echo "${{ steps.check_star.outputs.data }}" | jq -r '.[].login')
-          if echo "$stargazers" | grep -q "$user"; then
-            echo "User $user has starred the repo."
-            echo "has_star=true" >> $GITHUB_ENV
-          else
-            echo "User $user has NOT starred the repo."
-            echo "has_star=false" >> $GITHUB_ENV
-          fi
+          script: |
+            const issueUser = context.payload.issue.user.login;
+            const repoOwner = context.repo.owner;
+            const repoName = context.repo.repo;
+            const stargazers = await github.paginate(
+              github.repos.listStargazers, 
+              {
+                owner: repoOwner,
+                repo: repoName,
+                per_page: 100
+              }
+            );
+            const hasStarred = stargazers.some(star => star.login === issueUser);
+            return hasStarred;
 
       - name: Add comment if user has not starred the repo
-        if: env.has_star == 'false'
-        run: |
-          COMMENT="Hello @${{ github.event.issue.user.login }}, in order to create issues in this repository, you need to star it first. Please star the repo and reopen the issue."
-          curl -X POST \
-            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-            -d '{"body": "'"$COMMENT"'"}' \
-            "https://api.github.com/repos/${{ github.repository_owner }}/${{ github.event.repository.name }}/issues/${{ github.event.issue.number }}/comments"
+        if: steps.check_star.outputs.result == 'false'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const issueNumber = context.payload.issue.number;
+            const issueUser = context.payload.issue.user.login;
+            const comment = `Hello @${issueUser}, in order to create issues in this repository, you need to star it first. Please star the repo and reopen the issue.`;
+            await github.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issueNumber,
+              body: comment
+            });
 
       - name: Close issue if user has not starred the repo
-        if: env.has_star == 'false'
-        uses: octokit/request-action@v2
+        if: steps.check_star.outputs.result == 'false'
+        uses: actions/github-script@v6
         with:
-          route: PATCH /repos/{owner}/{repo}/issues/{issue_number}
-          owner: ${{ github.repository_owner }}
-          repo: ${{ github.event.repository.name }}
-          issue_number: ${{ github.event.issue.number }}
-          state: closed
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const issueNumber = context.payload.issue.number;
+            await github.issues.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issueNumber,
+              state: 'closed'
+            });
