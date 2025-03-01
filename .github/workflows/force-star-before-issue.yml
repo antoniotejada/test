@@ -13,9 +13,11 @@ jobs:
         uses: actions/github-script@v6
         with:
           script: |
+            
             const issueUser = context.payload.issue.user.login;
             const repoOwner = context.repo.owner;
             const repoName = context.repo.repo;
+            /*
             const stargazers = await github.paginate(
               github.rest.repos.listStargazers, 
               {
@@ -27,7 +29,12 @@ jobs:
             console.log("Stargazers", stargazers);
             console.log("User", issueUser);
             const hasStarred = stargazers.some(star => star.login === issueUser);
-            return hasStarred;
+            */
+            
+            // /user/starred/{owner}/{repo}
+            const response = await github.rest.user.starred({owner: repoOwner, repo: repoName});
+            console.log("Reponse", response);
+            return response;
 
       - name: Add comment if user has not starred the repo
         if: steps.check_star.outputs.result == 'false'
