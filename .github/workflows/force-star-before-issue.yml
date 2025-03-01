@@ -31,6 +31,9 @@ jobs:
             const hasStarred = stargazers.some(star => star.login === issueUser);
             */
 
+            // There's also 
+            // github.rest.activity.checkRepoIsStarredByAuthenticatedUser
+            // but fails with "Unhandled error: HttpError: Resource not accessible by integration"
             const stargazers = await github.paginate(
               github.rest.activity.listStargazersForRepo, 
               {
@@ -39,16 +42,11 @@ jobs:
                 per_page: 100
               }
             );
-            console.log("Stargazers", stargazers);
-            console.log("User", issueUser);
             const hasStarred = stargazers.some(star => star.login === issueUser);
+            console.log("Stargazers", stargazers);
+            console.log("User", issueUser, hasStarred);
             
-            // /user/starred/{owner}/{repo}
-            // console.log(github.rest);
-            // const response = await github.rest.user.starred({owner: repoOwner, repo: repoName});
-            const response = await github.rest.activity.checkRepoIsStarredByAuthenticatedUser({owner: repoOwner, repo: repoName});
-            console.log("Reponse", response);
-            return response;
+            return hasStarred;
 
       - name: Add comment if user has not starred the repo
         if: steps.check_star.outputs.result == 'false'
